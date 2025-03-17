@@ -1,55 +1,25 @@
-name: Go API CI
+name: Go API Deployment
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+    branches:
+      - main
 
 jobs:
   build-and-run:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. 检出代码
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
-      # 2. 设置 Go 环境
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v3
         with:
-          go-version: '1.21'
+          go-version: 1.23
 
-      # 3. 下载依赖
-      - name: Get dependencies
-        run: go mod download
+      - name: Build the application
+        run: go build -o main .
 
-      # 4. 运行测试
-      - name: Run tests
-        run: go test -v ./...
-
-      # 5. 构建项目
-      - name: Build
-        run: go build -v -o go-api
-
-      # 6. 下载并配置 ngrok
-      - name: Setup ngrok
-        run: |
-          curl -s https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip -o ngrok.zip
-          unzip ngrok.zip
-          chmod +x ngrok
-
-      # 7. 启动服务器并暴露公网访问
-      - name: Run server and expose with ngrok
-        run: |
-          ./go-api & # 在后台运行服务器
-          sleep 2    # 等待服务器启动
-          ./ngrok http 8080 --log=stdout > ngrok.log & # 启动 ngrok
-          sleep 5    # 等待 ngrok 连接
-          # 提取 ngrok 公网 URL
-          NGROK_URL=$(curl -s http://localhost:4040/api/tunnels | grep -o 'https://[^"]*')
-          echo "Public URL: $NGROK_URL"
-          echo "Try accessing $NGROK_URL/hello"
-          # 保持运行一段时间供测试（比如 2 分钟）
-          sleep 120
+      - name: Run the application in the background
+        run: ./main &
