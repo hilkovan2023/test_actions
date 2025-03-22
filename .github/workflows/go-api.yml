@@ -16,10 +16,31 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
-          go-version: 1.23
+          go-version: 1.25
 
       - name: Build the application
         run: go build -o main .
 
-      - name: Run the application in the background
+      - name: Upload the binary as an artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: go-api-binary
+          path: main
+
+  deploy-to-codespaces:
+    needs: build-and-run
+    runs-on: codespaces
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Download the binary artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: go-api-binary
+
+      - name: Make the binary executable
+        run: chmod +x main
+
+      - name: Run the application
         run: ./main &
